@@ -8,7 +8,12 @@ GEM
       eventmachine (~> 0.12.6)
       minitest (>= 1.7.1)
       nokogiri (>= 1.4.0)
+    em-hiredis (0.1.0)
+      hiredis (~> 0.3.0)
+    em-synchrony (0.2.0)
+      eventmachine (>= 0.12.9)
     eventmachine (0.12.10)
+    hiredis (0.3.2)
     minitest (2.2.2)
     monkey-lib (0.5.4)
       backports
@@ -35,7 +40,9 @@ PLATFORMS
 
 DEPENDENCIES
   blather
+  em-hiredis
+  em-synchrony
   eventmachine (>= 0.12.10)
-  redis (>= 2.1.1)
+  redis (~> 2.2.0)
   sinatra
   sinatra-reloader

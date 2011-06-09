@@ -2,6 +2,9 @@ source 'http://rubygems.org'
 
 gem 'blather'
 gem 'sinatra'
-gem 'redis', '>= 2.1.1'
 gem 'eventmachine', '>= 0.12.10'
 gem 'sinatra-reloader'
+gem "em-hiredis"
+gem "em-synchrony"
+gem "redis", "~> 2.2.0", :require => ["redis/connection/synchrony", "redis"]
+
