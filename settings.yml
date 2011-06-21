@@ -1,0 +1,107 @@
+queue:
+    host: localhost
+    port: 61613
+
+xmpp_timeout: 10000
+xmpp:
+  domain: "localhost"
+  bosh_server: "http://localhost:5280/http-bind"
+
+  gateway:
+    host: "subdomain.localhost.com"
+    port: 5679
+
+  gtalk:
+    username: gopresently@gmail.com
+    password: password
+  aim:
+    username: presentlyapp 
+    password: password 
+  yahoo:
+    username: presentlyapp 
+    password: password 
+  msn:
+    username: presentlyapp@hotmail.com 
+    password: password 
+
+email:
+  ingestion:
+  email: "incoming@domain.com"
+  domain: presently.com
+  noreply: no-reply
+  support: support
+  billing: billing
+  mailer_notification: ["user@domain.com"]
+  billing_notification: ["user@domain.com"] 
+  xmpp_notification: ["user@domain.com"]
+  pilot_notification: ["user@domain.com"]
+  incoming:
+    server: imap.gmail.com
+    port: 993
+    folder: INBOX
+    username: incoming@presently.com
+    password: password
+  smtp:
+    address: smtp.gmail.com
+    port: 587
+    domain: support@presently.com
+    authentication: plain
+    user_name: support@presently.com
+    password: password 
+
+mediaplug:
+  url: mediaplug.presently.com
+
+uploads:
+  storage: filesystem
+  tmpdir: 
+
+bitly:
+  user: presently
+  key: R_da27cbf32d3216153967e12e117639da
+
+twitter:
+  consumer_key: "8nEDTae62KxqhpW9Ap5yzA"
+  consumer_secret: "mNq8GQdqnf22FFQPEYRjIoLzoIUjybG9velblIOc"
+  
+language_default: en
+languages:
+    en: English
+    zh: 中 文
+
+# sso:
+#   enabled: true
+#   # auto_import controls whether presently will try to automatically import the user
+#   # by either contacting the profile server or using the information in the header
+#   # if it is set to false, new user would not be automatically imported, only the users
+#   # exists in the system can log in. And following profile related setting will be ignored.
+#   auto_import: false
+#   
+#   #sso user id name in the header
+#   sso_uid: HTTP_PERSON_ID
+# 
+#   #sso server session id name in the header. Since presently has its own session, this will be use to detected session
+#   #expiration from the SSO server, and reset tthe the presently session when it happens.
+#   #sso_session_id: SM_SERVERSESSIONID
+#   
+#   #type of profile looking method, server or header. (defualt to header)
+#   #profile_type: server
+#   
+#   #if profile lookup is through server, uncomment following profile related settings
+#   #profile_url: http://63.118.102.157/public/api/getProfile.php
+#   
+#   # timeout can not be less than 200
+#   #profile_url_timeout: 500 
+#   #profile_uid: UserId
+#   #manage_profile_url: http://63.118.102.157/public/api/manageProfile.php
+#   #manage_profile_callback: back_url  
+# 
+#   #if profile lookup is through header, following information need to be specified in the header
+#   sso_firstname: HTTP_IV_FIRST_NAME
+#   sso_lastname: HTTP_IV_LAST_NAME
+#   sso_email: HTTP_MAIL
+#   sso_login: HTTP_IV_USER
+# 
+#   #if there is a common signout server, please edit following logout_url
+#   logout_url: https://login.sso.com/siteminderagent/forms/logout.jsp       
+

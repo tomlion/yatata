@@ -1,0 +1,3 @@
+<message from='<%= from %>' to='<%= to %>' type='chat'>
+  <body>Thy lips are warm.</body>
+</message>
