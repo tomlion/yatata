@@ -7,9 +7,32 @@ class XmppHelper
     def debug=(need_debug)
     end
 
+    def builder
+      @builder if @builder
+      @builder = XmppBuilder.new(XmppClient.settings)
+    end
+
+    def queue(*strings)
+      return true if Rails.env == "test"
+      strings.each do |stanza|
+        publish :xmpp_updates, stanza
+      end
+    end
+
+    def method_missing(method, *args, &block)
+      if method.to_s =~ /^build_/
+        builder.send(method, *args, &block)
+      else
+        super
+      end
+    end
     # -----------------------------
     # Update Management
     # -----------------------------
+
+    def send_mail(to, title, message, type)
+      queue(build_user_email(to, title, message, type))
+    end
 
     def deliver_update(update)
       case update.sender
@@ -21,25 +44,24 @@ class XmppHelper
     end
 
     def deliver_group_broadcast(update, opts = {})
-      XmppClient.new.send_group_broadcast(update, opts)
+      queue(build_group_broadcast(update, opts))
     end
 
     def deliver_account_broadcast(update, opts = {})
-      XmppClient.new.send_account_broadcast(update, opts)
+      queue(build_account_broadcast(update, opts))
     end
 
     def deliver_user_update(update, opts = {})
-      client = XmppClient.new
       if update.group_message?
-        client.send_group_update(update, opts)
+        queue(build_group_update(update, opts))
       elsif update.direct?
-        client.send_direct_message(update, opts)
+        queue(build_user_direct_message(update, opts))
       else
         # user updates are sent to the user's PEP node, and also to the account's
         # pubsub node (for the 'All Updates' stream)
-        client.send_user_update(update, opts)
+        queue(build_user_update(update, opts))
         unless update.protected?
-          client.send_account_copy_update(update, opts)
+          queue(build_account_copy_update(update, opts))
         end
       end
     end
@@ -68,48 +90,49 @@ class XmppHelper
     # -----------------------------
 
     def discover_nodes(jid, password, parent_node)
-      connect(jid, password) {|step, client|
-        step.one { client.discover_nodes(parent_node) }
+      connect(jid, password) {|client|
+        client.discover_nodes(parent_node)
       }
     end
 
     def discover_node_info(jid, password, node)
-      connect(jid, password) { |step, client|
-        step.one { client.discover_node_info(node) }
+      connect(jid, password) { |client|
+        client.discover_node_info(node)
       }
     end
 
     def create_pubsub(creator_jid, password, name)
-      connect(creator_jid, password) do |step, client|
-        step.one { client.create_pubsub_node(name) }
-        step.two { client.subscribe_pubsub_node(name) }
+      connect(creator_jid, password) do |client|
+        client.create_pubsub_node(name) do
+          client.subscribe_pubsub_node(name)
+        end
       end
     end
 
     def delete_pubsub(creator_jid, password, name)
-      connect(creator_jid, password) { |step, client|
-        step.one { client.delete_pubsub_node(name) }
+      connect(creator_jid, password) { |client|
+        client.delete_pubsub_node(name)
       }
     end
 
     def subscribe_pubsub(creator_jid, password, user_jid, user_password, group_name)
-      return false unless connect(creator_jid, password) { |step, client|
+      return false unless connect(creator_jid, password) { |client|
         # this is to allow user_jid publish to the node
-        step.one { client.set_affiliations(user_jid, group_name) }
+        client.set_affiliations(user_jid, group_name)
       }
 
-      connect(user_jid, user_password) { |step, client|
-        step.one { client.subscribe_pubsub_node(group_name) }
+      connect(user_jid, user_password) { |client|
+        client.subscribe_pubsub_node(group_name)
       }
     end
 
     def unsubscribe_pubsub(creator_jid, password, user_jid, user_password, group_name)
-      return false unless connect(creator_jid, password) { |step, client|
-        step.one { client.set_affiliations(user_jid, group_name, "none") }
+      return false unless connect(creator_jid, password) { |client|
+        client.set_affiliations(user_jid, group_name, "none")
       }
 
-      connect(user_jid, user_password) { |step, client|
-        step.one { client.unsubscribe_pubsub_node(group_name) }
+      connect(user_jid, user_password) { |client|
+        client.unsubscribe_pubsub_node(group_name)
       }
     end
 
@@ -118,7 +141,7 @@ class XmppHelper
     # -----------------------------
 
     def create_user(user_jid, password)
-      connect(user_jid, "", false) { |step, client|
+      connect(user_jid, "", false) { |client|
         #create_user is special, it does not wait for an iq reply to send the resgister message
         client.register_user(password)
       }
@@ -126,13 +149,16 @@ class XmppHelper
 
     #http://xmpp.org/rfcs/rfc3921.html#int
     def follow_user(user_jid, password, other_jids)
-      connect(user_jid, password) { |step, client|
+      connect(user_jid, password) { |client|
         other_jids.each { |other_jid|
-          step.one {
-            client.follow_user(other_jid)
-          }
+          client.follow_user(other_jid)
         }
       }
+    end
+
+    def connect(jid, password)
+      client = XmppClient.connect(jid, password)
+      yield client
     end
 
 

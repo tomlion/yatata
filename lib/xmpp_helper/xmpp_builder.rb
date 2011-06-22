@@ -9,7 +9,7 @@ class XmppBuilder
 
   attr_accessor :client, :settings
 
-  def initialize(client, settings)
+  def initialize(settings, client = nil)
     @client = client
     @settings = settings
   end

@@ -3,6 +3,7 @@ require 'blather/client/client'
 module Yatata
 class Client < Blather::Client
   attr_accessor :state
+  attr_reader :started
   
   def initialize
     super
@@ -23,8 +24,20 @@ class Client < Blather::Client
     end
   end
   
+  alias_method :run_once, :run
+  alias_method :connect_once, :connect
+
   def run
-    connect
+    run_once unless started?
+    @started = true
+  end
+
+  def connect
+    run
+  end
+
+  def started?
+    !!started
   end
   
   [:initializing, :ready].each do |state|
@@ -40,10 +53,10 @@ class Client < Blather::Client
   end
   
   def post_init(stream, jid = nil)  # @private
-    super(stream, jid)
+    super
     consume_queue
   end
-  
+
 end # Client
 end # Module
 

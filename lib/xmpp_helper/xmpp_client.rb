@@ -1,12 +1,16 @@
-require 'hashie'
-
 class XmppClient
+  #include ActiveMessaging::MessageSender
   DEFAULT_TIMEOUT_IN_MILLISECONDS = 5000
 
   attr_reader :client
 
   def initialize(jid, password, host = nil, port = nil)
-    @client = Yatata::Client.setup jid, password, host, port
+    @client = Yatata::ClientPool.fetch jid, password, host, port
+  end
+
+  def run
+    @client.run
+    self
   end
 
   class << self
@@ -18,15 +22,18 @@ class XmppClient
     end
 
     def connect(jid, password, host = nil, port = nil)
-      self.new(jid, password, host, port).client.run
+      inst = self.new(jid, password, host, port).run
+      inst
     end
 
   end
 
 
   def method_missing(method, *args, &block)
-    if method.to_s =~ /build_/
+    if method.to_s =~ /^build_/
       builder.send(method, *args, &block)
+    else
+      super
     end
   end
 
@@ -38,8 +45,8 @@ class XmppClient
     deliver(build_discover_node_info_message(node))
   end
 
-  def create_pubsub_node(node)
-    deliver(build_create_node_message("/home/#{settings[:xmpp][:domain]}/#{node.downcase}"))
+  def create_pubsub_node(node, &block)
+    deliver(build_create_node_message("/home/#{settings[:xmpp][:domain]}/#{node.downcase}"), &block)
   end
 
   def subscribe_pubsub_node(node)
@@ -99,34 +106,10 @@ class XmppClient
   # Update Management
   # --------------------
 
-  def send_mail(to, title, message, type)
-    queue(build_user_email(to, title, message, type))
+  def builder
+    @builder if @builder
+    @builder = XmppBuilder.new(settings, @client)
   end
-
-  def send_direct_message(update, opts = {})
-    queue(build_user_direct_message(update, opts))
-  end
-
-  def send_user_update(update, opts = {})
-    queue(build_user_update(update, opts))
-  end
-
-  def send_group_broadcast(update, opts = {})
-    queue(build_group_broadcast(update, opts))
-  end
-
-  def send_group_update(update, opts = {})
-    queue(build_group_update(update, opts))
-  end
-
-  def send_account_broadcast(update, opts = {})
-    queue(build_account_broadcast(update, opts))
-  end
-
-  def send_account_copy_update(update, opts = {})
-    queue(build_account_copy_update(update, opts))
-  end
-
 
   private
 
@@ -134,13 +117,12 @@ class XmppClient
     XmppClient.settings
   end
 
-  def deliver stnz
-    @client.deliver stnz
-  end
-
-  def builder
-    @builder if @builder
-    @builder = XmppBuilder.new(@client, settings)
+  def deliver(stnz, &block)
+    if block
+      @client.deliver_with_handler(stnz, &block)
+    else
+      @client.deliver stnz
+    end
   end
 
 end
